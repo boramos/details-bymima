@@ -7,6 +7,7 @@ type QuoteRequestBody = {
   locale?: Locale;
   items?: CheckoutDraftItem[];
   deliveryMethod?: CheckoutDeliveryMethod;
+  hasPassport?: boolean;
 };
 
 export async function POST(request: Request) {
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ quote });
   } catch (error) {
+    console.error("Quote API Error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unable to generate quote" },
       { status: 400 },

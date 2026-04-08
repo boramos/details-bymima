@@ -101,15 +101,21 @@ export class ProductService {
    * Get product by slug
    */
   static async getProductBySlug(slug: string): Promise<ProductWithParsedFields | null> {
-    const product = await prisma.product.findUnique({
-      where: { slug },
-    });
+    try {
+      console.log("ProductService.getProductBySlug:", slug, "prisma:", typeof prisma);
+      const product = await prisma.product.findUnique({
+        where: { slug },
+      });
 
-    if (!product) {
-      return null;
+      if (!product) {
+        return null;
+      }
+
+      return this.parseProduct(product);
+    } catch (error) {
+      console.error("ProductService.getProductBySlug error:", error);
+      throw error;
     }
-
-    return this.parseProduct(product);
   }
 
   /**
