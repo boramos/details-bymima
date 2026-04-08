@@ -136,7 +136,7 @@ export class ConfigService {
       {
         key: "delivery_today_usd",
         value: 10,
-        description: "Same day delivery price in USD (before 12pm)",
+        description: "Same day delivery price in USD (before 2pm)",
         category: "delivery",
       },
       {

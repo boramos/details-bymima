@@ -11,7 +11,7 @@ import { formatPriceCop, type CatalogProductDetail } from "@/lib/catalog";
 import type { LandingDictionary, Locale } from "@/lib/i18n";
 import { calculateProductPrice, getDefaultSelections, type ProductSelections } from "@/lib/pricing";
 import { isSameDayEligible, type CheckoutDeliveryMethod } from "@/lib/checkout";
-import type { AutoBuyConfig, AutoBuyFrequency } from "@/components/checkout/AutoBuyModal";
+import { AutoBuyModal, type AutoBuyConfig } from "@/components/checkout/AutoBuyModal";
 
 type ProductDetailExperienceProps = {
   product: CatalogProductDetail;
@@ -30,6 +30,7 @@ export default function ProductDetailExperience({ product, locale, ui, checkoutU
   const [hasPassport, setHasPassport] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<CheckoutDeliveryMethod>("standard");
   const [userHasActivePassport, setUserHasActivePassport] = useState(false);
+  const [showAutoBuyModal, setShowAutoBuyModal] = useState(false);
   const [autoBuyConfig, setAutoBuyConfig] = useState<AutoBuyConfig>({ 
     enabled: false, 
     frequency: "monthly",
@@ -39,12 +40,13 @@ export default function ProductDetailExperience({ product, locale, ui, checkoutU
     type: "autoorder"
   });
 
-  const sameDayAvailable = useMemo(() => isSameDayEligible(), []);
+  const [sameDayAvailable, setSameDayAvailable] = useState(() => isSameDayEligible());
 
   useEffect(() => {
     const saved = localStorage.getItem("cart-delivery-method");
     if (saved) {
-      setDeliveryMethod(saved as CheckoutDeliveryMethod);
+      const nextMethod = saved as CheckoutDeliveryMethod;
+      setDeliveryMethod(nextMethod === "today" && !isSameDayEligible() ? "standard" : nextMethod);
     }
     
     const savedPassport = localStorage.getItem("cart-passport-selected");
@@ -52,6 +54,23 @@ export default function ProductDetailExperience({ product, locale, ui, checkoutU
       setHasPassport(true);
     }
   }, []);
+
+  useEffect(() => {
+    setSameDayAvailable(isSameDayEligible());
+
+    const interval = window.setInterval(() => {
+      setSameDayAvailable(isSameDayEligible());
+    }, 30000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (deliveryMethod === "today" && !sameDayAvailable) {
+      setDeliveryMethod("standard");
+      localStorage.setItem("cart-delivery-method", "standard");
+    }
+  }, [deliveryMethod, sameDayAvailable]);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -67,8 +86,9 @@ export default function ProductDetailExperience({ product, locale, ui, checkoutU
   }, [session]);
 
   const handleDeliveryMethodChange = (method: CheckoutDeliveryMethod) => {
-    setDeliveryMethod(method);
-    localStorage.setItem("cart-delivery-method", method);
+    const nextMethod = method === "today" && !sameDayAvailable ? "standard" : method;
+    setDeliveryMethod(nextMethod);
+    localStorage.setItem("cart-delivery-method", nextMethod);
   };
   
   const handlePassportChange = (checked: boolean) => {
@@ -366,66 +386,73 @@ export default function ProductDetailExperience({ product, locale, ui, checkoutU
                       className="h-4 w-4 rounded border-[var(--color-primary-light)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                     />
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-[var(--color-dark)]">
-                      {checkoutUi.passportCheckboxLabel}
-                    </span>
-                    <span className="text-xs text-[var(--color-muted)] mt-0.5 leading-relaxed">
-                      {checkoutUi.passportDescription}
-                    </span>
-                    <div className="mt-1.5 flex items-center gap-2">
-                      <span className="rounded bg-[var(--color-primary)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-semibold text-[var(--color-dark)]">
+                        {checkoutUi.passportCheckboxLabel}
+                      </span>
+                      <span className="rounded bg-[var(--color-primary)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
                         PROMO
                       </span>
-                      <span className="text-sm font-bold text-[var(--color-dark)]">{checkoutUi.passportPromoPrice}</span>
-                      <span className="text-xs text-[var(--color-muted)] line-through">{checkoutUi.passportRegularPrice}</span>
+                      <span className="text-xs font-bold text-[var(--color-primary)]">{checkoutUi.passportPromoPrice}</span>
+                      <span className="text-[10px] text-[var(--color-muted)] line-through">{checkoutUi.passportRegularPrice}</span>
                     </div>
+                    <span className="text-[10px] text-[var(--color-muted)] leading-tight">
+                      {checkoutUi.passportDescription}
+                    </span>
                   </div>
                 </label>
               </div>
 
               <div className="rounded-xl border border-[var(--color-primary-light)]/80 bg-[var(--color-primary-pale)]/30 p-4">
-                <label className="block mb-2">
-                  <span className="text-sm font-semibold text-[var(--color-dark)]">
-                    Auto-Buy
-                  </span>
-                  <span className="block text-xs text-[var(--color-muted)] mt-1 leading-relaxed">
-                    Choose how often you want to receive this order automatically.
-                  </span>
+                <label htmlFor="autobuy-checkbox" className="flex items-start gap-3 cursor-pointer">
+                  <div className="flex h-5 items-center">
+                    <input
+                      id="autobuy-checkbox"
+                      type="checkbox"
+                      checked={autoBuyConfig.enabled}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setShowAutoBuyModal(true);
+                        } else {
+                          setAutoBuyConfig({ ...autoBuyConfig, enabled: false });
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-[var(--color-primary-light)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-[var(--color-dark)]">
+                      Auto-Buy {autoBuyConfig.enabled && `(${autoBuyConfig.frequency})`}
+                    </span>
+                    <span className="text-xs text-[var(--color-muted)] mt-1 leading-relaxed">
+                      {autoBuyConfig.enabled 
+                        ? `${autoBuyConfig.type === 'autoorder' ? 'Auto-purchase' : 'Reminder'} every ${autoBuyConfig.frequency}`
+                        : 'Set up automatic recurring orders or reminders'}
+                    </span>
+                  </div>
                 </label>
-                <select
-                  value={autoBuyConfig.enabled ? autoBuyConfig.frequency : "none"}
-                  onChange={(e) => {
-                    if (e.target.value === "none") {
-                      setAutoBuyConfig({ 
-                        enabled: false, 
-                        frequency: "monthly",
-                        startDate: new Date().toISOString().split("T")[0],
-                        endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split("T")[0],
-                        quantity: 1,
-                        type: "autoorder"
-                      });
-                    } else {
-                      setAutoBuyConfig({
-                        enabled: true,
-                        frequency: e.target.value as AutoBuyFrequency,
-                        startDate: new Date().toISOString().split("T")[0],
-                        endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split("T")[0],
-                        quantity: 1,
-                        type: "autoorder"
-                      });
-                    }
-                  }}
-                  className="mt-2 block w-full rounded-lg border border-[var(--color-primary-light)] bg-white px-3 py-2 text-sm text-[var(--color-dark)] shadow-sm focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
-                >
-                  <option value="none">No Auto-Buy</option>
-                  <option value="weekly">Weekly (Semanal)</option>
-                  <option value="monthly">Monthly (Mensual)</option>
-                  <option value="quarterly">Every 3 Months (Cada 3 Meses)</option>
-                  <option value="annually">Once a Year (Una Vez al Año)</option>
-                </select>
               </div>
             </div>
+
+              <AutoBuyModal
+                isOpen={showAutoBuyModal}
+                onClose={() => setShowAutoBuyModal(false)}
+                onSave={(config) => {
+                  setAutoBuyConfig(config);
+                  setShowAutoBuyModal(false);
+                }}
+                ui={{
+                  autoBuyModalTitle: "Configure Auto-Buy",
+                  autoBuyModalDescription: "Set up automatic recurring orders or reminders for this product",
+                  autoBuyFrequencyLabel: "Frequency",
+                  autoBuyFrequencyWeekly: "Weekly",
+                  autoBuyFrequencyBiweekly: "Biweekly",
+                  autoBuyFrequencyMonthly: "Monthly",
+                  autoBuyCancelButton: "Cancel",
+                  autoBuyConfirmButton: "Save Configuration"
+                }}
+              />
 
               <button
                 type="button"

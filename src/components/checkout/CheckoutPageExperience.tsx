@@ -51,7 +51,8 @@ export default function CheckoutPageExperience({ locale, ui, cartUi }: CheckoutP
   useEffect(() => {
     const saved = localStorage.getItem("cart-delivery-method");
     if (saved) {
-      setDeliveryMethod(saved as CheckoutDeliveryMethod);
+      const nextMethod = saved as CheckoutDeliveryMethod;
+      setDeliveryMethod(nextMethod === "today" && !isSameDayEligible() ? "standard" : nextMethod);
     }
     
     const savedPassport = localStorage.getItem("cart-passport-selected");
@@ -66,11 +67,22 @@ export default function CheckoutPageExperience({ locale, ui, cartUi }: CheckoutP
     selections: item.selections,
     note: item.note,
   })), [items]);
-  const sameDayAvailable = useMemo(() => isSameDayEligible(), []);
+  const [sameDayAvailable, setSameDayAvailable] = useState(() => isSameDayEligible());
+
+  useEffect(() => {
+    setSameDayAvailable(isSameDayEligible());
+
+    const interval = window.setInterval(() => {
+      setSameDayAvailable(isSameDayEligible());
+    }, 30000);
+
+    return () => window.clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (deliveryMethod === "today" && !sameDayAvailable) {
       setDeliveryMethod("standard");
+      localStorage.setItem("cart-delivery-method", "standard");
     }
   }, [deliveryMethod, sameDayAvailable]);
 
@@ -297,20 +309,20 @@ export default function CheckoutPageExperience({ locale, ui, cartUi }: CheckoutP
                             className="h-4 w-4 rounded border-[var(--color-primary-light)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                           />
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-semibold text-[var(--color-dark)]">
-                            {ui.passportCheckboxLabel}
-                          </span>
-                          <span className="text-xs text-[var(--color-muted)] mt-0.5 leading-relaxed">
-                            {ui.passportDescription}
-                          </span>
-                          <div className="mt-1.5 flex items-center gap-2">
-                            <span className="rounded bg-[var(--color-primary)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-semibold text-[var(--color-dark)]">
+                              {ui.passportCheckboxLabel}
+                            </span>
+                            <span className="rounded bg-[var(--color-primary)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
                               PROMO
                             </span>
-                            <span className="text-sm font-bold text-[var(--color-dark)]">{ui.passportPromoPrice}</span>
-                            <span className="text-xs text-[var(--color-muted)] line-through">{ui.passportRegularPrice}</span>
+                            <span className="text-xs font-bold text-[var(--color-primary)]">{ui.passportPromoPrice}</span>
+                            <span className="text-[10px] text-[var(--color-muted)] line-through">{ui.passportRegularPrice}</span>
                           </div>
+                          <span className="text-[10px] text-[var(--color-muted)] leading-tight">
+                            {ui.passportDescription}
+                          </span>
                         </div>
                       </label>
                     </div>
@@ -325,7 +337,7 @@ export default function CheckoutPageExperience({ locale, ui, cartUi }: CheckoutP
                         {deliveryMethod === "pickup" && ui.deliveryMethodPickup}
                         {deliveryMethod === "standard" && ui.deliveryMethodStandard}
                         {deliveryMethod === "tomorrow" && ui.deliveryMethodTomorrow}
-                        {deliveryMethod === "today" && ui.deliveryMethodToday}
+                        {deliveryMethod === "today" && sameDayAvailable && ui.deliveryMethodToday}
                       </p>
                     </div>
                     <div className="text-right">
