@@ -9,9 +9,12 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+pnpm-lock.yaml
+package-lock.json
 
 # testing
 /coverage
+/.playwright-mcp
 
 # next.js
 /.next/
@@ -39,3 +42,34 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Database
+prisma/dev.db
+prisma/dev.db-journal
+db-backup.db
+*.db
+*.db-journal
+
+# Screenshots and images
+*.png
+*.jpg
+*.jpeg
+*.PNG
+
+# Temp files
+fix_ts.js
+test-prisma.js
+test-prisma.mjs
+update_checkout.js
+*.old.*
+
+# Agent files
+.agents/
+skills-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
