@@ -26,7 +26,15 @@ export default function HomeBanner({ content }: HomeBannerProps) {
             {content.title}{content.accent ? <span className="italic text-[var(--color-primary)] [text-shadow:0_6px_24px_rgba(0,0,0,0.62)]"> {content.accent}</span> : null}
           </h1>
           <p className="mx-auto max-w-xl text-xs font-medium leading-relaxed text-white/90 sm:text-sm [text-shadow:0_4px_18px_rgba(0,0,0,0.48)]">
-            {content.description}
+            {content.description === "Beautiful gift boxes and floral arrangements to celebrate the moments that matter most." ? (
+              <>
+                Beautiful gift boxes and floral arrangements to celebrate
+                <br />
+                the moments that matter most.
+              </>
+            ) : (
+              content.description
+            )}
           </p>
           <div className="flex justify-center pt-2">
             <a
