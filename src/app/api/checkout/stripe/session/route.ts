@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 
 import { buildCheckoutQuote, type CheckoutDeliveryMethod, type CheckoutDraftItem } from "@/lib/checkout";
 import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
+import { PassportService } from "@/services/PassportService";
 
 type StripeCheckoutBody = {
   locale?: Locale;
   items?: CheckoutDraftItem[];
   deliveryMethod?: CheckoutDeliveryMethod;
+  hasPassport?: boolean;
   customer?: {
     email: string;
     name: string;
@@ -27,6 +30,11 @@ export async function POST(request: Request) {
 
   try {
     const body = (await request.json()) as StripeCheckoutBody;
+    const session = await auth();
+
+    const hasActivePassport = session?.user?.id
+      ? await PassportService.isPassportActive(session.user.id)
+      : false;
 
     if (!body.items || body.items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
@@ -36,6 +44,8 @@ export async function POST(request: Request) {
       locale: body.locale ?? DEFAULT_LOCALE,
       items: body.items,
       deliveryMethod: body.deliveryMethod ?? "standard",
+      includePassport: body.hasPassport ?? false,
+      hasActivePassport,
     });
 
     const payload = new URLSearchParams();
@@ -53,6 +63,8 @@ export async function POST(request: Request) {
     payload.set("metadata[city]", body.customer?.city ?? "");
     payload.set("metadata[postal_code]", body.customer?.postalCode ?? "");
     payload.set("metadata[delivery_method]", quote.deliveryMethod);
+    payload.set("metadata[has_active_passport]", String(quote.hasActivePassport));
+    payload.set("metadata[passport_applied]", String(quote.passportApplied));
 
     const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",

@@ -401,7 +401,7 @@ export const catalogProducts: CatalogProduct[] = [
     categories: ["bouquet"],
     styles: ["playful", "garden"],
     tags: ["order", "occasions", "occasions/birthday", "occasions/thank-you", "mothers-day"],
-    bestSeller: false,
+    bestSeller: true,
   },
   {
     id: "romantic-box",
@@ -435,7 +435,7 @@ export const catalogProducts: CatalogProduct[] = [
     categories: ["centerpiece"],
     styles: ["classic", "minimal"],
     tags: ["order", "events", "events/weddings", "events/corporate-events", "contact"],
-    bestSeller: false,
+    bestSeller: true,
   },
   {
     id: "blush-basket",
@@ -740,7 +740,7 @@ export function getProductsForPage(pageKey: string): CatalogProduct[] {
   return catalogProducts.filter((product) => product.tags.includes(pageKey));
 }
 
-export function getBestSellerProducts(limit = 4): CatalogProduct[] {
+export function getBestSellerProducts(limit = 8): CatalogProduct[] {
   return catalogProducts.filter((product) => product.bestSeller).slice(0, limit);
 }
 

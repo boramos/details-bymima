@@ -33,6 +33,9 @@ export type CheckoutQuote = {
   deliveryMethod: CheckoutDeliveryMethod;
   freeDeliveryApplied: boolean;
   sameDayEligible: boolean;
+  hasActivePassport: boolean;
+  passportApplied: boolean;
+  passportPrice: number;
 };
 
 export const SAME_DAY_CUTOFF_HOUR_MIAMI = 14;
@@ -74,9 +77,14 @@ export async function buildCheckoutQuote(input: {
   locale: Locale;
   items: CheckoutDraftItem[];
   deliveryMethod: CheckoutDeliveryMethod;
+  includePassport?: boolean;
+  hasActivePassport?: boolean;
 }): Promise<CheckoutQuote> {
   try {
-    const freeDeliveryThreshold = await ConfigService.getOrDefault("free_delivery_threshold_usd", 100) as number;
+    const [freeDeliveryThreshold, passportPrice] = await Promise.all([
+      ConfigService.getOrDefault("free_delivery_threshold_usd", 100),
+      ConfigService.getOrDefault("passport_price_usd", 19.99),
+    ]);
 
     const items = await Promise.all(
       input.items
@@ -121,6 +129,8 @@ export async function buildCheckoutQuote(input: {
 
     const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
     const sameDayEligible = isSameDayEligible();
+    const hasActivePassport = input.hasActivePassport ?? false;
+    const passportApplied = Boolean(input.includePassport) && !hasActivePassport;
 
     if (input.deliveryMethod === "today" && !sameDayEligible) {
       throw new Error("Same-day delivery is no longer available for today.");
@@ -131,19 +141,29 @@ export async function buildCheckoutQuote(input: {
       ConfigService.getOrDefault("tax_rate", 0.07),
     ]);
 
-    const freeDeliveryApplied = subtotal >= freeDeliveryThreshold || input.deliveryMethod === "pickup";
+    const freeDeliveryApplied =
+      subtotal >= (freeDeliveryThreshold as number) ||
+      input.deliveryMethod === "pickup" ||
+      hasActivePassport ||
+      passportApplied;
     const deliveryFee = freeDeliveryApplied ? 0 : deliveryPrices[input.deliveryMethod];
     const taxes = Number((subtotal * (taxRate as number)).toFixed(2));
+    const passportCharge = passportApplied ? (passportPrice as number) : 0;
+
+    const total = Number((subtotal + taxes + deliveryFee + passportCharge).toFixed(2));
 
     return {
       items,
       subtotal,
       taxes,
       deliveryFee,
-      total: subtotal + taxes + deliveryFee,
+      total,
       deliveryMethod: input.deliveryMethod,
       freeDeliveryApplied,
       sameDayEligible,
+      hasActivePassport,
+      passportApplied,
+      passportPrice: passportCharge,
     };
   } catch (error) {
     console.error("buildCheckoutQuote error:", error);

@@ -11,7 +11,7 @@ export default function BrandMark({ href = "/", tagline, tone = "dark" }: BrandM
   const taglineColor = tone === "light" ? "text-white" : "text-amber-700";
   return (
     <Link href={href} className="group inline-flex flex-col items-center gap-1 text-center">
-      <span className={`font-[family-name:var(--font-playfair)] text-[1.5rem] font-bold italic tracking-[-0.02em] ${textColor}`}>
+      <span className={`font-[family-name:var(--font-gochi)] text-[2rem] tracking-normal ${textColor}`}>
         Details by MIMA
       </span>
       <span className={`text-center text-[10px] uppercase tracking-[0.3em] ${taglineColor}`}>

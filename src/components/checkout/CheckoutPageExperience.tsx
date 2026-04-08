@@ -26,6 +26,7 @@ export default function CheckoutPageExperience({ locale, ui, cartUi }: CheckoutP
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasPassport, setHasPassport] = useState(false);
+  const [userHasActivePassport, setUserHasActivePassport] = useState(false);
   const { data: session } = useSession();
   const [autoBuyConfig, setAutoBuyConfig] = useState<AutoBuyConfig>({ 
     enabled: false, 
@@ -86,6 +87,33 @@ export default function CheckoutPageExperience({ locale, ui, cartUi }: CheckoutP
     }
   }, [deliveryMethod, sameDayAvailable]);
 
+  const handlePassportChange = (checked: boolean) => {
+    setHasPassport(checked);
+    localStorage.setItem("cart-passport-selected", checked.toString());
+  };
+
+  useEffect(() => {
+    if (!session?.user?.id) {
+      setUserHasActivePassport(false);
+      return;
+    }
+
+    fetch("/api/passport")
+      .then((res) => res.json())
+      .then((data) => {
+        const active = Boolean(data.isActive);
+        setUserHasActivePassport(active);
+
+        if (active) {
+          setHasPassport(false);
+          localStorage.setItem("cart-passport-selected", "false");
+        }
+      })
+      .catch(() => {
+        setUserHasActivePassport(false);
+      });
+  }, [session?.user?.id]);
+
   useEffect(() => {
     if (draftItems.length === 0) {
       setQuote(null);
@@ -118,7 +146,7 @@ export default function CheckoutPageExperience({ locale, ui, cartUi }: CheckoutP
     };
 
     void run();
-  }, [deliveryMethod, draftItems, locale, hasPassport]);
+  }, [deliveryMethod, draftItems, locale, hasPassport, userHasActivePassport]);
 
   const setField = (key: keyof typeof form, value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -296,16 +324,29 @@ export default function CheckoutPageExperience({ locale, ui, cartUi }: CheckoutP
                   </div>
                 ))}
 
-                {!hasPassport && (
-                  <div className="mb-4">
-                    <div className="rounded-xl border border-[var(--color-primary-light)]/80 bg-[var(--color-primary-pale)]/30 p-4">
+                <div className="mb-4">
+                  <div className="rounded-xl border border-[var(--color-primary-light)]/80 bg-[var(--color-primary-pale)]/30 p-4">
+                    {userHasActivePassport ? (
+                      <div className="flex items-start gap-3">
+                        <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-primary)] text-white">
+                          ✓
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-semibold text-[var(--color-dark)]">{ui.passportApplied}</span>
+                            <span className="rounded bg-[var(--color-primary)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">ACTIVE</span>
+                          </div>
+                          <span className="text-[10px] text-[var(--color-muted)] leading-tight">{ui.passportDescription}</span>
+                        </div>
+                      </div>
+                    ) : (
                       <label htmlFor="passport-checkbox" className="flex items-start gap-3 cursor-pointer">
                         <div className="flex h-5 items-center">
                           <input
                             id="passport-checkbox"
                             type="checkbox"
                             checked={hasPassport}
-                            onChange={(e) => setHasPassport(e.target.checked)}
+                            onChange={(e) => handlePassportChange(e.target.checked)}
                             className="h-4 w-4 rounded border-[var(--color-primary-light)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                           />
                         </div>
@@ -325,9 +366,9 @@ export default function CheckoutPageExperience({ locale, ui, cartUi }: CheckoutP
                           </span>
                         </div>
                       </label>
-                    </div>
+                    )}
                   </div>
-                )}
+                </div>
 
                 <div className="mb-4 rounded-xl border border-[var(--color-primary-light)]/70 bg-white p-4">
                   <div className="flex items-center justify-between">
@@ -343,7 +384,7 @@ export default function CheckoutPageExperience({ locale, ui, cartUi }: CheckoutP
                     <div className="text-right">
                       <p className="text-sm font-bold text-[var(--color-primary)]">
                         {deliveryMethod === "pickup" && ui.deliveryPriceFree}
-                        {deliveryMethod !== "pickup" && (quote?.deliveryFee === 0 || hasPassport ? ui.deliveryPriceFree : formatCheckoutTotal(quote?.deliveryFee ?? 0, locale))}
+                        {deliveryMethod !== "pickup" && (quote?.deliveryFee === 0 ? ui.deliveryPriceFree : formatCheckoutTotal(quote?.deliveryFee ?? 0, locale))}
                       </p>
                     </div>
                   </div>
@@ -352,21 +393,21 @@ export default function CheckoutPageExperience({ locale, ui, cartUi }: CheckoutP
                 <div className="space-y-2 border-t border-[var(--color-primary-pale)] pt-3 text-sm text-[var(--color-muted)]">
                   <div className="flex items-center justify-between"><span>{cartUi.subtotalLabel}</span><span>{formatCheckoutTotal(quote.subtotal, locale)}</span></div>
                   <div className="flex items-center justify-between"><span>{ui.taxesLabel}</span><span>{formatCheckoutTotal(quote.taxes, locale)}</span></div>
-                  {hasPassport ? (
+                  {quote.passportApplied || quote.hasActivePassport ? (
                     <div className="flex items-center justify-between">
-                      <span>{ui.passportTitle}</span>
+                      <span>{quote.hasActivePassport ? ui.passportApplied : ui.passportTitle}</span>
                       <div className="flex items-center gap-2">
-                        <span className="line-through opacity-50">{ui.passportRegularPrice}</span>
-                        <span className="font-semibold text-[var(--color-primary)]">{ui.passportPromoPrice}</span>
+                        {quote.passportApplied ? <span className="line-through opacity-50">{ui.passportRegularPrice}</span> : null}
+                        <span className="font-semibold text-[var(--color-primary)]">{quote.hasActivePassport ? ui.deliveryPriceFree : formatCheckoutTotal(quote.passportPrice, locale)}</span>
                       </div>
                     </div>
                   ) : null}
                   {quote.deliveryMethod !== "pickup" ? (
-                    <div className="flex items-center justify-between"><span>{ui.deliveryTitle}</span><span>{hasPassport || quote.deliveryFee === 0 ? ui.deliveryPriceFree : formatCheckoutTotal(quote.deliveryFee, locale)}</span></div>
+                    <div className="flex items-center justify-between"><span>{ui.deliveryTitle}</span><span>{quote.deliveryFee === 0 ? ui.deliveryPriceFree : formatCheckoutTotal(quote.deliveryFee, locale)}</span></div>
                   ) : null}
                   <div className="flex items-center justify-between text-base font-semibold text-[var(--color-dark)]">
                     <span>{ui.totalLabel}</span>
-                    <span>{formatCheckoutTotal(quote.total + (hasPassport ? 19.99 : 0) - (hasPassport && quote.deliveryMethod !== "pickup" ? quote.deliveryFee : 0), locale)}</span>
+                    <span>{formatCheckoutTotal(quote.total, locale)}</span>
                   </div>
                 </div>
               </div>

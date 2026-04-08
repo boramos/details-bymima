@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, DM_Sans } from "next/font/google";
+import { Playfair_Display, DM_Sans, Gochi_Hand } from "next/font/google";
 
 import AppProviders from "@/components/providers/AppProviders";
 import { getDictionary } from "@/lib/i18n";
@@ -18,6 +18,12 @@ const dmSans = DM_Sans({
   subsets: ["latin"],
   variable: "--font-dm-sans",
   weight: ["400", "500", "700"],
+});
+
+const gochi = Gochi_Hand({
+  subsets: ["latin"],
+  variable: "--font-gochi",
+  weight: "400",
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -43,7 +49,7 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body
-        className={`${dmSans.variable} ${playfair.variable} font-sans antialiased bg-[var(--color-cream)] text-[var(--color-dark)]`}
+        className={`${dmSans.variable} ${playfair.variable} ${gochi.variable} font-sans antialiased bg-[var(--color-cream)] text-[var(--color-dark)]`}
       >
         <AppProviders>{children}</AppProviders>
       </body>

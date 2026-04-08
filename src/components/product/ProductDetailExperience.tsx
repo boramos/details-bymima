@@ -77,8 +77,10 @@ export default function ProductDetailExperience({ product, locale, ui, checkoutU
       fetch("/api/passport")
         .then(res => res.json())
         .then(data => {
-          if (data.data?.status === "ACTIVE") {
+          if (data.isActive) {
             setUserHasActivePassport(true);
+            setHasPassport(false);
+            localStorage.setItem("cart-passport-selected", "false");
           }
         })
         .catch(() => {});
@@ -376,32 +378,45 @@ export default function ProductDetailExperience({ product, locale, ui, checkoutU
               </div>
 
               <div className="rounded-xl border border-[var(--color-primary-light)]/80 bg-[var(--color-primary-pale)]/30 p-3">
-                <label htmlFor="passport-checkbox-product" className="flex items-start gap-3 cursor-pointer">
-                  <div className="flex h-5 items-center">
-                    <input
-                      id="passport-checkbox-product"
-                      type="checkbox"
-                      checked={hasPassport}
-                      onChange={(e) => handlePassportChange(e.target.checked)}
-                      className="h-4 w-4 rounded border-[var(--color-primary-light)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-semibold text-[var(--color-dark)]">
-                        {checkoutUi.passportCheckboxLabel}
-                      </span>
-                      <span className="rounded bg-[var(--color-primary)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
-                        PROMO
-                      </span>
-                      <span className="text-xs font-bold text-[var(--color-primary)]">{checkoutUi.passportPromoPrice}</span>
-                      <span className="text-[10px] text-[var(--color-muted)] line-through">{checkoutUi.passportRegularPrice}</span>
+                {userHasActivePassport ? (
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-primary)] text-white">✓</div>
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-semibold text-[var(--color-dark)]">{checkoutUi.passportApplied}</span>
+                        <span className="rounded bg-[var(--color-primary)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">ACTIVE</span>
+                      </div>
+                      <span className="text-[10px] text-[var(--color-muted)] leading-tight">{checkoutUi.passportDescription}</span>
                     </div>
-                    <span className="text-[10px] text-[var(--color-muted)] leading-tight">
-                      {checkoutUi.passportDescription}
-                    </span>
                   </div>
-                </label>
+                ) : (
+                  <label htmlFor="passport-checkbox-product" className="flex items-start gap-3 cursor-pointer">
+                    <div className="flex h-5 items-center">
+                      <input
+                        id="passport-checkbox-product"
+                        type="checkbox"
+                        checked={hasPassport}
+                        onChange={(e) => handlePassportChange(e.target.checked)}
+                        className="h-4 w-4 rounded border-[var(--color-primary-light)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-semibold text-[var(--color-dark)]">
+                          {checkoutUi.passportCheckboxLabel}
+                        </span>
+                        <span className="rounded bg-[var(--color-primary)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                          PROMO
+                        </span>
+                        <span className="text-xs font-bold text-[var(--color-primary)]">{checkoutUi.passportPromoPrice}</span>
+                        <span className="text-[10px] text-[var(--color-muted)] line-through">{checkoutUi.passportRegularPrice}</span>
+                      </div>
+                      <span className="text-[10px] text-[var(--color-muted)] leading-tight">
+                        {checkoutUi.passportDescription}
+                      </span>
+                    </div>
+                  </label>
+                )}
               </div>
 
               <div className="rounded-xl border border-[var(--color-primary-light)]/80 bg-[var(--color-primary-pale)]/30 p-4">
