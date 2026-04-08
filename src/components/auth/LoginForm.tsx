@@ -15,7 +15,6 @@ export default function LoginForm({ content }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +47,7 @@ export default function LoginForm({ content }: LoginFormProps) {
         const response = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password, passwordConfirm, phone }),
+          body: JSON.stringify({ name, email, password, passwordConfirm, phone: "" }),
         });
 
         const data = await response.json();
@@ -309,34 +308,12 @@ export default function LoginForm({ content }: LoginFormProps) {
                     </button>
                   </div>
                 </div>
-
-                <div className="space-y-1.5 animate-fade-in-up">
-                  <label htmlFor="phone" className="block text-sm font-medium text-[var(--color-dark)]">
-                    {content.phoneLabel}
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--color-muted)]">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                    </div>
-                    <input
-                      id="phone"
-                      type="tel"
-                      required
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder={content.phonePlaceholder}
-                      className="w-full rounded-xl border border-[var(--color-primary-light)]/70 bg-white py-3 pl-11 pr-4 text-sm outline-none transition-colors focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] placeholder:text-[var(--color-muted)]/60"
-                    />
-                  </div>
-                </div>
               </>
             )}
 
             <button
               type="submit"
-              disabled={isLoading || !email || !password || (!isLoginTab && (!name || !phone || !passwordConfirm))}
+              disabled={isLoading || !email || !password || (!isLoginTab && (!name || !passwordConfirm))}
               className="w-full mt-2 inline-flex items-center justify-center rounded-full bg-[var(--color-primary)] px-6 py-3.5 text-sm font-bold text-white transition-all hover:scale-[1.02] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100 disabled:hover:shadow-none"
             >
               {isLoading ? (
