@@ -57,6 +57,13 @@ type Dictionary = {
     description: string;
     cta: string;
   };
+  sameDayCountdown: {
+    urgencyLabel: string;
+    deliveryEndsLabel: string;
+    hoursLabel: string;
+    minutesLabel: string;
+    secondsLabel: string;
+  };
   hero: {
     title: string;
     accent: string;
@@ -408,6 +415,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
         "Estos son los arreglos más vendidos y más recomendados para regalar sin fallar.",
       cta: "Ver catálogo completo",
     },
+      sameDayCountdown: {
+        urgencyLabel: "¿Tienes prisa?",
+        deliveryEndsLabel: "ENTREGA MISMO DÍA TERMINA EN:",
+        hoursLabel: "Horas",
+        minutesLabel: "Minutos",
+        secondsLabel: "Segundos",
+      },
     hero: {
       title: "Regalos que hablan",
       accent: "desde el corazón",
@@ -896,6 +910,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
       description:
         "These are the top-selling arrangements and the safest picks when you want to impress quickly.",
       cta: "See the full catalog",
+    },
+    sameDayCountdown: {
+      urgencyLabel: "In a rush?",
+      deliveryEndsLabel: "SAME DAY DELIVERY ENDS IN:",
+      hoursLabel: "Hours",
+      minutesLabel: "Minutes",
+      secondsLabel: "Seconds",
     },
     hero: {
       title: "Gifts that speak",
