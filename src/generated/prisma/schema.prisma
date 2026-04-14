@@ -1,0 +1,587 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:/Users/boramos/Developer/details-bymima/prisma/dev.db"
+}
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  emailVerified    DateTime?
+  name             String?
+  image            String?
+  passwordHash     String?
+  phone            String?
+  twoFactorEnabled Boolean   @default(false)
+  twoFactorPhone   String?
+  role             String    @default("CUSTOMER") // ADMIN | CUSTOMER
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts           Account[]
+  sessions           Session[]
+  addresses          Address[]
+  orders             Order[]
+  passport           PassportSubscription?
+  giftCardsPurchased GiftCard[]               @relation("GiftCardPurchaser")
+  giftCardsRedeemed  GiftCardRedemption[]
+  autoBuys           AutoBuy[]
+  cart               CartItem[]
+  savedCards         SavedCard[]
+  wishlists          Wishlist[]
+  storeCredits       StoreCredit[]
+  otpCodes           OtpCode[]
+  newsletter         NewsletterSubscription[]
+
+  @@index([email])
+}
+
+// Removed enum UserRole - SQLite uses String type
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Address {
+  id                   String  @id @default(cuid())
+  userId               String
+  label                String? // e.g. "Casa", "Oficina"
+  firstName            String?
+  lastName             String?
+  street               String
+  apartment            String? // apt / suite / unit
+  city                 String
+  state                String? // state or province
+  postalCode           String
+  country              String  @default("United States")
+  phone                String?
+  deliveryInstructions String?
+  isDefault            Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+  @@index([userId, isDefault])
+}
+
+model Product {
+  id                String  @id @default(cuid())
+  slug              String  @unique
+  nameEs            String
+  nameEn            String
+  descriptionEs     String
+  descriptionEn     String
+  longDescriptionEs String?
+  longDescriptionEn String?
+  basePriceCop      Int
+  imagePath         String?
+  imagePaths        String  @default("[]")
+  imageEmoji        String
+  gradientClass     String
+  bestSeller        Boolean @default(false)
+  active            Boolean @default(true)
+
+  categories String
+  colors     String
+  styles     String
+  tags       String
+
+  optionGroups String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderItems    OrderItem[]
+  cartItems     CartItem[]
+  autoBuys      AutoBuy[]
+  wishlistItems WishlistItem[]
+
+  @@index([slug])
+  @@index([bestSeller])
+  @@index([active])
+}
+
+model IncludeCategory {
+  id                String   @id @default(cuid())
+  key               String   @unique
+  labelEs           String
+  labelEn           String
+  descriptionEs     String?
+  descriptionEn     String?
+  productCategories String   @default("[]")
+  inputType         String   @default("single")
+  required          Boolean  @default(false)
+  active            Boolean  @default(true)
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  items IncludeItem[]
+
+  @@index([active, sortOrder])
+}
+
+model IncludeItem {
+  id            String   @id @default(cuid())
+  categoryId    String
+  key           String   @unique
+  nameEs        String
+  nameEn        String
+  priceDeltaUsd Int      @default(0)
+  imagePath     String?
+  active        Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  category       IncludeCategory            @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  configurations IncludeConfigurationItem[]
+
+  @@index([categoryId, active, sortOrder])
+}
+
+model IncludeConfiguration {
+  id                String   @id @default(cuid())
+  key               String   @unique
+  labelEs           String
+  labelEn           String
+  descriptionEs     String?
+  descriptionEn     String?
+  productCategories String   @default("[]")
+  active            Boolean  @default(true)
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  items IncludeConfigurationItem[]
+
+  @@index([active, sortOrder])
+}
+
+model IncludeConfigurationItem {
+  id              String @id @default(cuid())
+  configurationId String
+  includeItemId   String
+
+  configuration IncludeConfiguration @relation(fields: [configurationId], references: [id], onDelete: Cascade)
+  includeItem   IncludeItem          @relation(fields: [includeItemId], references: [id], onDelete: Cascade)
+
+  @@unique([configurationId, includeItemId])
+  @@index([configurationId])
+  @@index([includeItemId])
+}
+
+model Order {
+  id          String @id @default(cuid())
+  orderNumber String @unique
+  userId      String
+
+  subtotalCop    Int
+  taxCop         Int
+  deliveryFeeCop Int
+  discountCop    Int @default(0)
+  totalCop       Int
+
+  status String @default("PENDING") // PENDING | CONFIRMED | PREPARING | OUT_FOR_DELIVERY | DELIVERED | CANCELLED
+
+  customerName  String
+  customerEmail String
+  customerPhone String
+
+  deliveryMethod        String // PICKUP | STANDARD | TOMORROW | TODAY
+  deliveryAddressId     String?
+  deliveryAddress       Address?  @relation(fields: [deliveryAddressId], references: [id])
+  scheduledDeliveryDate DateTime?
+  actualDeliveryDate    DateTime?
+
+  paymentMethod   String // CARD | PAYPAL
+  paymentStatus   String    @default("PENDING") // PENDING | PAID | FAILED | REFUNDED
+  stripeSessionId String?
+  paypalOrderId   String?
+  paidAt          DateTime?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user                User                 @relation(fields: [userId], references: [id])
+  items               OrderItem[]
+  giftCardRedemptions GiftCardRedemption[]
+
+  @@index([userId])
+  @@index([orderNumber])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Removed enums OrderStatus, DeliveryMethod, PaymentMethod, PaymentStatus - SQLite uses String types
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  productId String
+
+  productSlug  String
+  productName  String
+  quantity     Int
+  unitPriceCop Int
+  lineTotalCop Int
+
+  selections String
+  note       String?
+
+  createdAt DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model CartItem {
+  id        String @id @default(cuid())
+  userId    String
+  productId String
+
+  quantity   Int     @default(1)
+  selections String // JSON string
+  note       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId, note])
+  @@index([userId])
+}
+
+model SavedCard {
+  id          String   @id @default(cuid())
+  userId      String
+  last4       String
+  brand       String // visa | mastercard | amex | discover
+  expiryMonth String
+  expiryYear  String
+  cardCvc     String?
+  nickname    String?
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PassportSubscription {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  status       String   @default("ACTIVE") // ACTIVE | EXPIRED | CANCELLED | PAUSED
+  startDate    DateTime
+  endDate      DateTime
+  pricePaidCop Int
+
+  stripeSubscriptionId String?
+  paypalSubscriptionId String?
+
+  autoRenew Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+// Removed enum SubscriptionStatus - SQLite uses String type
+
+model AutoBuy {
+  id        String @id @default(cuid())
+  userId    String
+  productId String
+
+  quantity   Int    @default(1)
+  selections String // JSON string
+
+  frequency         String // WEEKLY | BIWEEKLY | MONTHLY
+  startDate         DateTime
+  endDate           DateTime?
+  nextScheduledDate DateTime
+
+  status String @default("ACTIVE") // ACTIVE | PAUSED | CANCELLED | COMPLETED
+
+  reminderEnabled    Boolean @default(true)
+  reminderDaysBefore Int     @default(3)
+
+  deliveryAddressId String?
+  paymentMethod     String // CARD | PAYPAL
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product      Product            @relation(fields: [productId], references: [id])
+  executionLog AutoBuyExecution[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([nextScheduledDate])
+}
+
+// Removed enums AutoBuyFrequency, AutoBuyStatus - SQLite uses String types
+
+model AutoBuyExecution {
+  id        String  @id @default(cuid())
+  autoBuyId String
+  orderId   String?
+
+  scheduledFor DateTime
+  executedAt   DateTime @default(now())
+  status       String
+  errorMessage String?
+
+  autoBuy AutoBuy @relation(fields: [autoBuyId], references: [id], onDelete: Cascade)
+
+  @@index([autoBuyId])
+  @@index([scheduledFor])
+}
+
+model SiteConfig {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  value       String
+  valueType   String  @default("string") // string | number | boolean | json
+  description String?
+  category    String  @default("general") // general | pricing | delivery | tax | features
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+  @@index([category])
+}
+
+model GiftCardCatalog {
+  id              String   @id @default(cuid())
+  key             String   @unique
+  nameEs          String
+  nameEn          String
+  descriptionEs   String
+  descriptionEn   String
+  active          Boolean  @default(true)
+  allowCustom     Boolean  @default(true)
+  presetAmounts   String   @default("[10,20,50,100]")
+  minCustomAmount Int      @default(10)
+  maxCustomAmount Int      @default(500)
+  imagePath       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  giftCards GiftCard[]
+}
+
+model GiftCard {
+  id                 String    @id @default(cuid())
+  catalogId          String?
+  purchaserUserId    String?
+  code               String    @unique
+  initialAmountUsd   Int
+  remainingAmountUsd Int
+  status             String    @default("ACTIVE") // ACTIVE | PENDING_PAYMENT | REDEEMED | INACTIVE | EXPIRED
+  recipientName      String?
+  recipientEmail     String?
+  recipientPhone     String?
+  message            String?
+  deliveryMethod     String    @default("EMAIL") // EMAIL | TEXT | PHYSICAL
+  deliveryAddress    String?
+  senderName         String?
+  senderEmail        String?
+  senderPhone        String?
+  orderNumber        String?
+  paymentProvider    String?
+  paymentReference   String?
+  expiresAt          DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  catalog       GiftCardCatalog?     @relation(fields: [catalogId], references: [id])
+  purchaserUser User?                @relation("GiftCardPurchaser", fields: [purchaserUserId], references: [id])
+  redemptions   GiftCardRedemption[]
+
+  @@index([status])
+  @@index([recipientEmail])
+  @@index([purchaserUserId])
+}
+
+model GiftCardRedemption {
+  id         String   @id @default(cuid())
+  giftCardId String
+  userId     String?
+  orderId    String?
+  amountUsd  Int
+  createdAt  DateTime @default(now())
+
+  giftCard GiftCard @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id])
+  order    Order?   @relation(fields: [orderId], references: [id])
+
+  @@index([giftCardId])
+  @@index([orderId])
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String   @default("Favoritos")
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items WishlistItem[]
+
+  @@index([userId])
+}
+
+model WishlistItem {
+  id          String   @id @default(cuid())
+  wishlistId  String
+  productId   String
+  productSlug String
+  productName String
+  addedAt     DateTime @default(now())
+
+  wishlist Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id])
+
+  @@unique([wishlistId, productId])
+  @@index([wishlistId])
+  @@index([productId])
+}
+
+model NewsletterSubscription {
+  id        String   @id @default(cuid())
+  userId    String?
+  email     String   @unique
+  active    Boolean  @default(true)
+  source    String   @default("modal") // modal | checkout | account
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([userId])
+}
+
+model StoreCredit {
+  id           String    @id @default(cuid())
+  userId       String
+  amountUsd    Int // original amount in USD (whole dollars)
+  remainingUsd Int // remaining balance
+  reason       String // REFUND | PROMOTION | REFERRAL | MANUAL
+  note         String?
+  status       String    @default("ACTIVE") // ACTIVE | USED | EXPIRED
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  userId    String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model SiteContent {
+  id         String   @id @default(cuid())
+  sectionKey String
+  locale     String
+  value      String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([sectionKey, locale])
+  @@index([sectionKey])
+  @@index([locale])
+}
+
+model PromoSection {
+  id              String   @id @default(cuid())
+  pageKey         String   @default("home")
+  locale          String
+  badge           String?
+  title           String
+  description     String
+  ctaLabel        String?
+  ctaHref         String?
+  backgroundClass String?
+  active          Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([pageKey, locale, active, sortOrder])
+}
