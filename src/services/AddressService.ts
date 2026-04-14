@@ -18,10 +18,16 @@ export class AddressService {
   }
 
   static async createAddress(userId: string, data: {
+    label?: string;
+    firstName?: string;
+    lastName?: string;
     street: string;
+    apartment?: string;
     city: string;
+    state?: string;
     postalCode: string;
     country?: string;
+    phone?: string;
     deliveryInstructions?: string;
     isDefault?: boolean;
   }) {
@@ -42,10 +48,16 @@ export class AddressService {
   }
 
   static async updateAddress(id: string, userId: string, data: {
+    label?: string;
+    firstName?: string;
+    lastName?: string;
     street?: string;
+    apartment?: string;
     city?: string;
+    state?: string;
     postalCode?: string;
     country?: string;
+    phone?: string;
     deliveryInstructions?: string;
   }) {
     return prisma.address.updateMany({

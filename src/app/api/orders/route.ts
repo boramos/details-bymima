@@ -15,7 +15,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const orders = await OrderService.getOrdersByUser(session.user.id);
+    const { searchParams } = new URL(request.url);
+    const filter = searchParams.get("filter");
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
+
+    let dateFilter: { gte?: Date; lte?: Date } | undefined;
+    const now = new Date();
+
+    if (filter === "3months") {
+      dateFilter = { gte: new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()) };
+    } else if (filter === "1year") {
+      dateFilter = { gte: new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()) };
+    } else if (filter === "custom" && from) {
+      dateFilter = {
+        gte: new Date(from),
+        ...(to ? { lte: new Date(to) } : {}),
+      };
+    }
+
+    const orders = await OrderService.getOrdersByUser(session.user.id, dateFilter);
     
     return NextResponse.json({
       success: true,

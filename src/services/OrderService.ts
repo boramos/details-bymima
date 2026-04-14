@@ -67,9 +67,12 @@ export class OrderService {
     });
   }
 
-  static async getOrdersByUser(userId: string) {
+  static async getOrdersByUser(userId: string, dateFilter?: { gte?: Date; lte?: Date }) {
     return prisma.order.findMany({
-      where: { userId },
+      where: {
+        userId,
+        ...(dateFilter ? { createdAt: dateFilter } : {}),
+      },
       include: {
         items: {
           include: {
