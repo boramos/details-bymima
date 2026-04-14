@@ -12,10 +12,25 @@ export default auth(function proxy(request: NextRequest & { auth?: { user?: unkn
 
   const isAccountPage = nextUrl.pathname.startsWith("/account");
   const isAdminPage = nextUrl.pathname.startsWith("/admin");
+  const isAdminLoginPage = nextUrl.pathname === "/admin/login";
   const session = request.auth;
+  const sessionUser = typeof session?.user === "object" && session.user !== null ? session.user : null;
+  const sessionRole = sessionUser && "role" in sessionUser ? sessionUser.role : null;
 
-  if ((isAccountPage || isAdminPage) && !session) {
+  if (isAccountPage && !session) {
     return NextResponse.redirect(new URL("/login", nextUrl));
+  }
+
+  if (isAdminPage && !isAdminLoginPage && !session) {
+    return NextResponse.redirect(new URL("/admin/login", nextUrl));
+  }
+
+  if (isAdminLoginPage && typeof sessionRole === "string") {
+    return NextResponse.redirect(new URL(sessionRole.toLowerCase() === "admin" ? "/admin" : "/account", nextUrl));
+  }
+
+  if (isAdminPage && !isAdminLoginPage && typeof sessionRole === "string" && sessionRole.toLowerCase() !== "admin") {
+    return NextResponse.redirect(new URL("/account", nextUrl));
   }
 
   const requestHeaders = new Headers(request.headers);

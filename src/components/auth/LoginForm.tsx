@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ComponentPropsWithoutRef, useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { type LandingDictionary } from "@/lib/i18n";
@@ -31,7 +31,7 @@ export default function LoginForm({ content }: LoginFormProps) {
     }
   };
 
-  const handleEmailSignIn = async (e: React.FormEvent) => {
+  const handleEmailSignIn = async (e: Parameters<NonNullable<ComponentPropsWithoutRef<"form">["onSubmit"]>>[0]) => {
     e.preventDefault();
     setIsLoading(true);
     setAuthError(null);
@@ -62,10 +62,14 @@ export default function LoginForm({ content }: LoginFormProps) {
           email,
           password,
           redirect: false,
-          callbackUrl: "/account",
+          redirectTo: "/account",
         });
 
-        if (result?.error) {
+        if (result?.code === "two_factor_required") {
+          window.location.href = `/login/2fa?email=${encodeURIComponent(email)}`;
+        } else if (result?.code === "sms_not_configured") {
+          setAuthError(content.errorGeneric);
+        } else if (result?.error) {
           setAuthError(content.errorInvalidCredentials);
         } else if (result?.ok) {
           window.location.href = "/account";
@@ -83,10 +87,14 @@ export default function LoginForm({ content }: LoginFormProps) {
         email,
         password,
         redirect: false,
-        callbackUrl: "/account",
+        redirectTo: "/account",
       });
 
-      if (result?.error) {
+      if (result?.code === "two_factor_required") {
+        window.location.href = `/login/2fa?email=${encodeURIComponent(email)}`;
+      } else if (result?.code === "sms_not_configured") {
+        setAuthError(content.errorGeneric);
+      } else if (result?.error) {
         setAuthError(content.errorInvalidCredentials);
       } else if (result?.ok) {
         window.location.href = "/account";
@@ -178,9 +186,6 @@ export default function LoginForm({ content }: LoginFormProps) {
           <form onSubmit={handleEmailSignIn} className="space-y-5">
             {!isLoginTab && (
               <div className="space-y-1.5 animate-fade-in-up">
-                <label htmlFor="name" className="block text-sm font-medium text-[var(--color-dark)]">
-                  {content.nameLabel}
-                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--color-muted)]">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -191,6 +196,7 @@ export default function LoginForm({ content }: LoginFormProps) {
                     id="name"
                     type="text"
                     required
+                    minLength={2}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder={content.namePlaceholder}
@@ -201,9 +207,6 @@ export default function LoginForm({ content }: LoginFormProps) {
             )}
 
             <div className="space-y-1.5">
-              <label htmlFor="email" className="block text-sm font-medium text-[var(--color-dark)]">
-                {content.emailLabel}
-              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--color-muted)]">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -224,9 +227,6 @@ export default function LoginForm({ content }: LoginFormProps) {
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm font-medium text-[var(--color-dark)]">
-                  {content.passwordLabel}
-                </label>
                 {isLoginTab && (
                   <Link href="/forgot-password" className="text-xs font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-light)] transition-colors">
                     {content.forgotPassword}
@@ -271,9 +271,6 @@ export default function LoginForm({ content }: LoginFormProps) {
             {!isLoginTab && (
               <>
                 <div className="space-y-1.5 animate-fade-in-up">
-                  <label htmlFor="passwordConfirm" className="block text-sm font-medium text-[var(--color-dark)]">
-                    {content.passwordConfirmLabel}
-                  </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--color-muted)]">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
