@@ -13,7 +13,7 @@ export async function GET(
 ) {
   try {
     // Validate slug parameter
-    const validatedParams = ProductSlugSchema.parse(params);
+    const validatedParams = ProductSlugSchema.parse(await params);
     
     // Fetch product using service layer
     const product = await ProductService.getProductBySlug(validatedParams.slug);

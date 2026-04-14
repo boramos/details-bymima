@@ -66,35 +66,34 @@ export default function Contact({ content, variant = "home" }: ContactProps) {
 
               <form className="space-y-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-[var(--color-muted)] mb-2">
-                    {content.fields.name}
-                  </label>
                   <input 
                     type="text" 
                     id="name" 
+                    name="name"
+                    required
+                    minLength={2}
                     className="w-full rounded-xl border border-[var(--color-primary-light)]/75 bg-[var(--color-cream)] px-5 py-4 outline-none transition-all duration-300 focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/15"
                     placeholder={content.fields.namePlaceholder}
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-[var(--color-muted)] mb-2">
-                    {content.fields.email}
-                  </label>
                   <input 
                     type="email" 
                     id="email" 
+                    name="email"
+                    required
                     className="w-full rounded-xl border border-[var(--color-primary-light)]/75 bg-[var(--color-cream)] px-5 py-4 outline-none transition-all duration-300 focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/15"
                     placeholder={content.fields.emailPlaceholder}
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-[var(--color-muted)] mb-2">
-                    {content.fields.message}
-                  </label>
                   <textarea 
                     id="message" 
+                    name="message"
+                    required
+                    minLength={10}
                     rows={4}
                     className="w-full resize-none rounded-xl border border-[var(--color-primary-light)]/75 bg-[var(--color-cream)] px-5 py-4 outline-none transition-all duration-300 focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/15"
                     placeholder={content.fields.messagePlaceholder}
@@ -102,7 +101,7 @@ export default function Contact({ content, variant = "home" }: ContactProps) {
                 </div>
                 
                 <button 
-                  type="button"
+                  type="submit"
                     className="w-full rounded-xl bg-[var(--color-dark)] py-4 text-lg font-bold text-white shadow-[0_16px_32px_rgba(28,25,23,0.16)] transition-all duration-300 hover:bg-black hover:-translate-y-0.5"
                 >
                   {content.submitLabel}

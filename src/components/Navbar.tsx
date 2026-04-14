@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 import { useCart } from "@/components/cart/CartProvider";
 import BrandMark from "@/components/BrandMark";
@@ -17,6 +18,7 @@ type NavLink = NavbarProps["content"]["links"][number];
 export default function Navbar({ content }: NavbarProps) {
   const { itemCount } = useCart();
   const { data: session } = useSession();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [desktopOpenMenu, setDesktopOpenMenu] = useState<string | null>(null);
   const [mobileOpenMenu, setMobileOpenMenu] = useState<string | null>(null);
@@ -323,7 +325,13 @@ export default function Navbar({ content }: NavbarProps) {
                 </Link>
                 <button
                   type="button"
-                  onClick={() => { signOut({ redirectTo: "/" }); closeAllMenus(); }}
+                  onClick={() => {
+                    closeAllMenus();
+                    void signOut({ redirect: false }).then(() => {
+                      router.refresh();
+                      router.push("/");
+                    });
+                  }}
                   className="text-sm text-[var(--color-muted)] hover:text-[var(--color-primary)] transition-colors"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

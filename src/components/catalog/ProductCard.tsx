@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { formatPriceCop, getProductStartingPriceCop, type CatalogProduct } from "@/lib/catalog";
 import type { LandingDictionary, Locale } from "@/lib/i18n";
+import { WishlistHeart } from "@/components/catalog/WishlistHeart";
 
 type ProductCardProps = {
   product: CatalogProduct;
@@ -11,37 +12,41 @@ type ProductCardProps = {
 
 export default function ProductCard({ product, locale, ui }: ProductCardProps) {
   return (
-    <Link href={`/product/${product.slug}`} className="block">
-    <article className="group overflow-hidden rounded-[2rem] border border-[var(--color-primary-light)]/70 bg-white/96 shadow-[0_14px_40px_rgba(28,25,23,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_55px_rgba(28,25,23,0.12)]">
-      <div className={`relative flex aspect-[4/3] items-center justify-center border-b border-white/60 bg-gradient-to-br ${product.gradientClass}`}>
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.02))]" />
-        <span className="text-7xl drop-shadow-md transition-transform duration-500 group-hover:scale-110">
-          {product.imageEmoji}
-        </span>
+    <Link href={`/product/${product.slug}`} className="group block">
+      <div className={`relative aspect-square overflow-hidden bg-gradient-to-br ${product.gradientClass}`}>
+        <div className="absolute right-3 top-3 z-20 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <WishlistHeart slug={product.slug} size="sm" />
+        </div>
+
         {product.bestSeller && (
-          <span className="absolute left-4 top-4 rounded-full border border-white/70 bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-primary)] shadow-sm backdrop-blur-sm">
+          <span className="absolute left-3 top-3 z-20 bg-white/95 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-dark)] backdrop-blur-md">
             {ui.bestSellerBadge}
+          </span>
+        )}
+
+        <div className="absolute inset-0 z-10 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.02))]" />
+
+        {product.imagePath ? (
+          <img
+            src={product.imagePath}
+            alt={product.name[locale]}
+            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          />
+        ) : (
+          <span className="absolute inset-0 flex items-center justify-center text-7xl drop-shadow-sm transition-transform duration-700 ease-out group-hover:scale-105">
+            {product.imageEmoji}
           </span>
         )}
       </div>
 
-      <div className="space-y-4 p-6 text-center">
-        <div className="space-y-3">
-          <div className="space-y-2">
-            <h3 className="text-2xl font-bold font-[family-name:var(--font-playfair)] text-[var(--color-dark)]">
-              {product.name[locale]}
-            </h3>
-            <p className="text-sm font-medium uppercase tracking-[0.22em] text-[var(--color-muted)]">{ui.startingAtLabel}</p>
-            <span className="inline-flex rounded-full border border-[var(--color-primary-light)]/70 bg-[var(--color-primary-pale)] px-3 py-1 text-sm font-semibold text-[var(--color-primary)]">
-              {formatPriceCop(getProductStartingPriceCop(product), locale)}
-            </span>
-          </div>
-          <div className="border-t border-[var(--color-primary-pale)] pt-4 text-sm font-semibold text-[var(--color-primary)] transition-all group-hover:translate-x-1">
-            {ui.viewDetailsLabel} →
-          </div>
-        </div>
+      <div className="mt-3 space-y-1">
+        <h3 className="line-clamp-2 text-sm font-semibold font-[family-name:var(--font-playfair)] leading-snug text-[var(--color-dark)]">
+          {product.name[locale]}
+        </h3>
+        <p className="text-xs font-semibold text-[var(--color-dark)]">
+          {formatPriceCop(getProductStartingPriceCop(product), locale)}
+        </p>
       </div>
-    </article>
     </Link>
   );
 }

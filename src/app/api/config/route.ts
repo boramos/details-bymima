@@ -11,6 +11,7 @@ export async function GET() {
       "delivery_today_usd",
       "delivery_pickup_usd",
       "tax_rate",
+      "sandbox_mode",
     ]);
 
     return NextResponse.json({ config });
