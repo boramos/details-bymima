@@ -15,6 +15,9 @@ export type CatalogProduct = {
   name: LocalizedText;
   description: LocalizedText;
   priceLabel: LocalizedText;
+  basePriceCop?: number;
+  imagePath?: string | null;
+  imagePaths?: string[];
   imageEmoji: string;
   gradientClass: string;
   colors: string[];
@@ -45,6 +48,8 @@ export type ProductOptionGroup = {
 
 export type CatalogProductDetail = CatalogProduct & {
   basePriceCop: number;
+  imagePath?: string | null;
+  imagePaths?: string[];
   longDescription: LocalizedText;
   optionGroups: ProductOptionGroup[];
 };
@@ -762,6 +767,10 @@ function ensureExpandedPalette(product: CatalogProduct): string[] {
   const fallbackPalette = ["pink", "white", "red", "peach", "purple", "yellow"];
   const merged = [...product.colors];
 
+  if (merged.length > 0) {
+    return merged;
+  }
+
   for (const color of fallbackPalette) {
     if (!merged.includes(color)) {
       merged.push(color);
@@ -947,6 +956,10 @@ function buildOptionGroups(product: CatalogProduct): ProductOptionGroup[] {
 }
 
 export function getProductStartingPriceCop(product: CatalogProduct): number {
+  if (typeof product.basePriceCop === "number") {
+    return product.basePriceCop;
+  }
+
   return parseCopAmount(product.priceLabel.es);
 }
 
@@ -956,7 +969,7 @@ export function formatPriceCop(amountCop: number, locale: Locale): string {
     currency: "USD",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amountCop);
+  }).format(amountCop).replace("$", "US$");
 }
 
 export function getAllProductSlugs(): string[] {

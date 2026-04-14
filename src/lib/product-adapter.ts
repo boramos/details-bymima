@@ -12,7 +12,7 @@ import type { CatalogProduct, CatalogProductDetail, LocalizedText } from "@/lib/
  * Convert DB product to CatalogProduct shape for listings
  */
 export function dbProductToCatalogProduct(dbProduct: ProductWithParsedFields): CatalogProduct {
-  const formattedPrice = `$${(dbProduct.basePriceCop / 1000).toFixed(0)} mil COP`;
+  const formattedPrice = `US$${dbProduct.basePriceCop.toFixed(2)}`;
   
   return {
     id: dbProduct.id,
@@ -29,6 +29,9 @@ export function dbProductToCatalogProduct(dbProduct: ProductWithParsedFields): C
       es: formattedPrice,
       en: formattedPrice,
     },
+    basePriceCop: dbProduct.basePriceCop,
+    imagePath: dbProduct.imagePath ?? dbProduct.imagePaths?.[0] ?? null,
+    imagePaths: dbProduct.imagePaths,
     imageEmoji: dbProduct.imageEmoji,
     gradientClass: dbProduct.gradientClass,
     colors: dbProduct.colors,

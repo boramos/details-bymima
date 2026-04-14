@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useReducer } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from "react";
 
 import type { CartItem } from "@/lib/cart";
 import { CART_STORAGE_KEY, getCartCount, getCartSubtotalCop } from "@/lib/cart";
@@ -91,18 +91,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.items));
   }, [state.isHydrated, state.items]);
 
+  const addItem = useCallback((item: CartItem) => dispatch({ type: "add", payload: item }), []);
+  const removeItem = useCallback((itemId: string) => dispatch({ type: "remove", payload: { itemId } }), []);
+  const updateQuantity = useCallback((itemId: string, quantity: number) => dispatch({ type: "updateQuantity", payload: { itemId, quantity } }), []);
+  const clearCart = useCallback(() => dispatch({ type: "clear" }), []);
+
   const value = useMemo<CartContextValue>(
     () => ({
       items: state.items,
       isHydrated: state.isHydrated,
       itemCount: getCartCount(state.items),
       subtotalCop: getCartSubtotalCop(state.items),
-      addItem: (item) => dispatch({ type: "add", payload: item }),
-      removeItem: (itemId) => dispatch({ type: "remove", payload: { itemId } }),
-      updateQuantity: (itemId, quantity) => dispatch({ type: "updateQuantity", payload: { itemId, quantity } }),
-      clearCart: () => dispatch({ type: "clear" }),
+      addItem,
+      removeItem,
+      updateQuantity,
+      clearCart,
     }),
-    [state.isHydrated, state.items],
+    [state.isHydrated, state.items, addItem, removeItem, updateQuantity, clearCart],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

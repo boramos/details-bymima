@@ -8,6 +8,7 @@ export type CartItem = {
   id: string;
   productSlug: string;
   productName: string;
+  productImagePath?: string | null;
   productEmoji: string;
   productGradientClass: string;
   quantity: number;
@@ -35,6 +36,7 @@ export function createCartItem(product: CatalogProductDetail, selections: Produc
     id: buildCartItemId(product.slug, normalizedSelections, note),
     productSlug: product.slug,
     productName: product.name[locale],
+    productImagePath: product.imagePath,
     productEmoji: product.imageEmoji,
     productGradientClass: product.gradientClass,
     quantity: 1,

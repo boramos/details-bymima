@@ -52,8 +52,12 @@ export default function CartPageExperience({ locale, ui }: CartPageExperiencePro
 
               return (
                 <article key={item.id} className="grid gap-6 rounded-[2rem] border border-[var(--color-primary-light)]/70 bg-white/92 p-6 shadow-[0_18px_48px_rgba(28,25,23,0.08)] md:grid-cols-[160px_1fr]">
-                  <div className={`flex aspect-square items-center justify-center rounded-[1.5rem] bg-gradient-to-br ${item.productGradientClass}`}>
-                    <span className="text-6xl">{item.productEmoji}</span>
+                  <div className={`flex aspect-square items-center justify-center overflow-hidden rounded-[1.5rem] bg-gradient-to-br ${item.productGradientClass}`}>
+                    {item.productImagePath ? (
+                      <img src={item.productImagePath} alt={item.productName} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-6xl">{item.productEmoji}</span>
+                    )}
                   </div>
                   <div className="space-y-4">
                     <div className="flex flex-wrap items-start justify-between gap-4">

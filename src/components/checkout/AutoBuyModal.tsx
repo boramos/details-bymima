@@ -92,47 +92,31 @@ export function AutoBuyModal({
         <div className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label
-                htmlFor="startDate"
-                className="block text-sm font-semibold text-[var(--color-dark)] mb-2"
-              >
-                Fecha de Inicio
-              </label>
               <input
                 type="date"
                 id="startDate"
                 value={startDate}
                 min={today}
                 onChange={(e) => setStartDate(e.target.value)}
+                placeholder="Fecha de Inicio"
                 className="w-full rounded-lg border border-[var(--color-primary-light)]/70 px-4 py-2.5 text-sm text-[var(--color-dark)] bg-white focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] focus:outline-none"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="endDate"
-                className="block text-sm font-semibold text-[var(--color-dark)] mb-2"
-              >
-                Fecha de Finalización
-              </label>
               <input
                 type="date"
                 id="endDate"
                 value={endDate}
                 min={startDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                placeholder="Fecha de Finalización"
                 className="w-full rounded-lg border border-[var(--color-primary-light)]/70 px-4 py-2.5 text-sm text-[var(--color-dark)] bg-white focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] focus:outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label
-              htmlFor="quantity"
-              className="block text-sm font-semibold text-[var(--color-dark)] mb-2"
-            >
-              Cantidad por Entrega
-            </label>
             <input
               type="number"
               id="quantity"
@@ -140,17 +124,12 @@ export function AutoBuyModal({
               max="99"
               value={quantity}
               onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+              placeholder="Cantidad por Entrega"
               className="w-full rounded-lg border border-[var(--color-primary-light)]/70 px-4 py-2.5 text-sm text-[var(--color-dark)] bg-white focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] focus:outline-none"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="frequency"
-              className="block text-sm font-semibold text-[var(--color-dark)] mb-2"
-            >
-              {ui.autoBuyFrequencyLabel}
-            </label>
             <select
               id="frequency"
               value={frequency}
@@ -165,9 +144,6 @@ export function AutoBuyModal({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-[var(--color-dark)] mb-3">
-              Tipo de Suscripción
-            </label>
             <div className="space-y-3">
               <label className="flex items-start gap-3 p-4 rounded-xl border border-[var(--color-primary-light)]/70 cursor-pointer transition-all hover:bg-[var(--color-primary-pale)]/20 has-[:checked]:border-[var(--color-primary)] has-[:checked]:bg-[var(--color-primary-pale)]/30">
                 <input

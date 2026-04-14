@@ -30,9 +30,6 @@ export function DeliveryMethodSelector({
 }: DeliveryMethodSelectorProps) {
   return (
     <div className="rounded-xl border border-[var(--color-primary-light)]/70 bg-white p-4">
-      <label htmlFor="delivery-method" className="block text-sm font-semibold text-[var(--color-dark)] mb-2">
-        {ui.deliveryMethodLabel}
-      </label>
       <select
         id="delivery-method"
         value={deliveryMethod}
@@ -41,14 +38,14 @@ export function DeliveryMethodSelector({
       >
         <option value="pickup">{ui.deliveryMethodPickup} - {ui.deliveryPriceFree}</option>
         <option value="standard">
-          {ui.deliveryMethodStandard} - {hasPassport ? ui.deliveryPriceFree : (isAuthenticated ? `${ui.deliveryPriceMemberDiscount} (+$3)` : "+$4")}
+          {ui.deliveryMethodStandard} - {hasPassport ? ui.deliveryPriceFree : (isAuthenticated ? `${ui.deliveryPriceMemberDiscount} (US$3)` : "US$4")}
         </option>
         <option value="tomorrow">
-          {ui.deliveryMethodTomorrow} - {hasPassport ? ui.deliveryPriceFree : (isAuthenticated ? `${ui.deliveryPriceMemberDiscount} (+$5)` : "+$7")}
+          {ui.deliveryMethodTomorrow} - {hasPassport ? ui.deliveryPriceFree : (isAuthenticated ? `${ui.deliveryPriceMemberDiscount} (US$5)` : "US$7")}
         </option>
         {sameDayAvailable && (
           <option value="today">
-            {ui.deliveryMethodToday} - {hasPassport ? ui.deliveryPriceFree : (isAuthenticated ? `${ui.deliveryPriceMemberDiscount} (+$7)` : "+$10")}
+            {ui.deliveryMethodToday} - {hasPassport ? ui.deliveryPriceFree : (isAuthenticated ? `${ui.deliveryPriceMemberDiscount} (US$7)` : "US$10")}
           </option>
         )}
       </select>

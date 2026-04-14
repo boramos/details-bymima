@@ -42,6 +42,7 @@ export function AddressForm({
           value={email}
           onChange={(e) => onFieldChange("email", e.target.value)}
           placeholder={ui.emailLabel}
+          required
           className="rounded-xl border border-[var(--color-primary-light)]/70 px-4 py-3"
         />
         <input
@@ -49,13 +50,16 @@ export function AddressForm({
           value={name}
           onChange={(e) => onFieldChange("name", e.target.value)}
           placeholder={ui.nameLabel}
+          required
+          minLength={2}
           className="rounded-xl border border-[var(--color-primary-light)]/70 px-4 py-3"
         />
         <input
           type="tel"
           value={phone}
-          onChange={(e) => onFieldChange("phone", e.target.value)}
+          onChange={(e) => onFieldChange("phone", e.target.value.replace(/[^\d\s+\-()\u00f3]/g, ""))}
           placeholder={ui.phoneLabel}
+          required
           className="rounded-xl border border-[var(--color-primary-light)]/70 px-4 py-3"
         />
         {deliveryMethod !== "pickup" && (
@@ -65,6 +69,8 @@ export function AddressForm({
               value={address}
               onChange={(e) => onFieldChange("address", e.target.value)}
               placeholder={ui.addressLabel}
+              required
+              minLength={5}
               className="rounded-xl border border-[var(--color-primary-light)]/70 px-4 py-3"
             />
             <input
@@ -72,13 +78,16 @@ export function AddressForm({
               value={city}
               onChange={(e) => onFieldChange("city", e.target.value)}
               placeholder={ui.cityLabel}
+              required
+              minLength={2}
               className="rounded-xl border border-[var(--color-primary-light)]/70 px-4 py-3"
             />
             <input
               type="text"
               value={postalCode}
-              onChange={(e) => onFieldChange("postalCode", e.target.value)}
+              onChange={(e) => onFieldChange("postalCode", e.target.value.replace(/[^\d\s-]/g, "").slice(0, 10))}
               placeholder={ui.postalCodeLabel}
+              required
               className="rounded-xl border border-[var(--color-primary-light)]/70 px-4 py-3"
             />
           </>
