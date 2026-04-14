@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import type { Product as PrismaProduct } from "@prisma/client";
+import { IncludeService } from "@/services/IncludeService";
+
+type PrismaProductRecord = NonNullable<Awaited<ReturnType<typeof prisma.product.findUnique>>>;
 
 export interface ProductFilters {
   category?: string;
@@ -11,12 +13,35 @@ export interface ProductFilters {
   search?: string;
 }
 
-export interface ProductWithParsedFields extends Omit<PrismaProduct, 'categories' | 'colors' | 'styles' | 'tags' | 'optionGroups'> {
+export interface ProductWithParsedFields extends Omit<PrismaProductRecord, 'categories' | 'colors' | 'styles' | 'tags' | 'optionGroups' | 'imagePaths'> {
   categories: string[];
   colors: string[];
   styles: string[];
   tags: string[];
-  optionGroups: any[];
+  imagePaths: string[];
+  optionGroups: unknown[];
+}
+
+export interface ProductUpsertInput {
+  slug: string;
+  nameEs: string;
+  nameEn: string;
+  descriptionEs: string;
+  descriptionEn: string;
+  longDescriptionEs?: string | null;
+  longDescriptionEn?: string | null;
+  basePriceCop: number;
+  imagePath?: string | null;
+  imagePaths?: string[];
+  imageEmoji: string;
+  gradientClass: string;
+  bestSeller: boolean;
+  active: boolean;
+  categories: string[];
+  colors: string[];
+  styles: string[];
+  tags: string[];
+  optionGroups: unknown[];
 }
 
 /**
@@ -27,14 +52,30 @@ export class ProductService {
   /**
    * Parse JSON string fields from database to arrays/objects
    */
-  private static parseProduct(product: PrismaProduct): ProductWithParsedFields {
+  private static parseProduct(product: PrismaProductRecord): ProductWithParsedFields {
     return {
       ...product,
       categories: JSON.parse(product.categories),
       colors: JSON.parse(product.colors),
       styles: JSON.parse(product.styles),
       tags: JSON.parse(product.tags),
+      imagePaths: JSON.parse(product.imagePaths || "[]"),
       optionGroups: JSON.parse(product.optionGroups),
+    };
+  }
+
+  private static async withSharedIncludes(product: ProductWithParsedFields): Promise<ProductWithParsedFields> {
+    const sharedGroups = await IncludeService.buildOptionGroups(product.categories);
+
+    if (sharedGroups.length === 0) {
+      return product;
+    }
+
+    const paletteGroup = (product.optionGroups as { key?: string }[]).filter((group) => group.key === "palette");
+
+    return {
+      ...product,
+      optionGroups: [...paletteGroup, ...sharedGroups],
     };
   }
 
@@ -42,7 +83,7 @@ export class ProductService {
    * Get all active products with optional filtering
    */
   static async getAllProducts(filters?: ProductFilters): Promise<ProductWithParsedFields[]> {
-    const where: any = {
+    const where: Record<string, unknown> = {
       active: filters?.active !== undefined ? filters.active : true,
     };
 
@@ -111,7 +152,7 @@ export class ProductService {
         return null;
       }
 
-      return this.parseProduct(product);
+      return this.withSharedIncludes(this.parseProduct(product));
     } catch (error) {
       console.error("ProductService.getProductBySlug error:", error);
       throw error;
@@ -130,7 +171,7 @@ export class ProductService {
       return null;
     }
 
-    return this.parseProduct(product);
+    return this.withSharedIncludes(this.parseProduct(product));
   }
 
   /**
@@ -146,7 +187,7 @@ export class ProductService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return products.map(this.parseProduct);
+    return Promise.all(products.map((product) => this.withSharedIncludes(this.parseProduct(product))));
   }
 
   /**
@@ -187,5 +228,57 @@ export class ProductService {
     });
 
     return products.map(this.parseProduct);
+  }
+
+  static async createProduct(input: ProductUpsertInput): Promise<ProductWithParsedFields> {
+    const product = await prisma.product.create({
+      data: {
+        ...input,
+        longDescriptionEs: input.longDescriptionEs ?? null,
+        longDescriptionEn: input.longDescriptionEn ?? null,
+        imagePath: input.imagePath ?? null,
+        imagePaths: JSON.stringify(input.imagePaths ?? (input.imagePath ? [input.imagePath] : [])),
+        categories: JSON.stringify(input.categories),
+        colors: JSON.stringify(input.colors),
+        styles: JSON.stringify(input.styles),
+        tags: JSON.stringify(input.tags),
+        optionGroups: JSON.stringify(input.optionGroups),
+      },
+    });
+
+    return this.parseProduct(product);
+  }
+
+  static async updateProduct(
+    id: string,
+    input: ProductUpsertInput,
+  ): Promise<ProductWithParsedFields> {
+    const product = await prisma.product.update({
+      where: { id },
+      data: {
+        ...input,
+        longDescriptionEs: input.longDescriptionEs ?? null,
+        longDescriptionEn: input.longDescriptionEn ?? null,
+        imagePath: input.imagePath ?? null,
+        imagePaths: JSON.stringify(input.imagePaths ?? (input.imagePath ? [input.imagePath] : [])),
+        categories: JSON.stringify(input.categories),
+        colors: JSON.stringify(input.colors),
+        styles: JSON.stringify(input.styles),
+        tags: JSON.stringify(input.tags),
+        optionGroups: JSON.stringify(input.optionGroups),
+      },
+    });
+
+    return this.parseProduct(product);
+  }
+
+  static async deleteProduct(id: string): Promise<void> {
+    await prisma.product.update({
+      where: { id },
+      data: {
+        active: false,
+        bestSeller: false,
+      },
+    });
   }
 }

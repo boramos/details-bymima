@@ -12,19 +12,31 @@ export const CartItemUpdateSchema = z.object({
 });
 
 export const AddressCreateSchema = z.object({
+  label: z.string().max(50).optional(),
+  firstName: z.string().max(100).optional(),
+  lastName: z.string().max(100).optional(),
   street: z.string().min(1),
+  apartment: z.string().max(50).optional(),
   city: z.string().min(1),
+  state: z.string().max(100).optional(),
   postalCode: z.string().min(1),
   country: z.string().optional(),
+  phone: z.string().max(30).optional(),
   deliveryInstructions: z.string().optional(),
   isDefault: z.boolean().optional(),
 });
 
 export const AddressUpdateSchema = z.object({
+  label: z.string().max(50).optional(),
+  firstName: z.string().max(100).optional(),
+  lastName: z.string().max(100).optional(),
   street: z.string().min(1).optional(),
+  apartment: z.string().max(50).optional(),
   city: z.string().min(1).optional(),
+  state: z.string().max(100).optional(),
   postalCode: z.string().min(1).optional(),
   country: z.string().optional(),
+  phone: z.string().max(30).optional(),
   deliveryInstructions: z.string().optional(),
 });
 

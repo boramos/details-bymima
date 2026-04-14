@@ -7,7 +7,13 @@ export type ConfigKey =
   | "delivery_tomorrow_usd"
   | "delivery_today_usd"
   | "delivery_pickup_usd"
-  | "tax_rate";
+  | "tax_rate"
+  | "sandbox_mode"
+  | "sms_2fa_enabled"
+  | "sms_sandbox_mode"
+  | "twilio_account_sid"
+  | "twilio_auth_token"
+  | "twilio_phone_number";
 
 type ConfigValue = string | number | boolean | object;
 
@@ -104,6 +110,17 @@ export class ConfigService {
     this.cache.clear();
   }
 
+  static async listAll() {
+    const configs = await prisma.siteConfig.findMany({
+      orderBy: [{ category: "asc" }, { key: "asc" }],
+    });
+
+    return configs.map((config) => ({
+      ...config,
+      parsedValue: this.parseValue(config.value, config.valueType),
+    }));
+  }
+
   /**
    * Initialize default configurations if they don't exist
    */
@@ -150,6 +167,42 @@ export class ConfigService {
         value: 0.07,
         description: "Sales tax rate (7%)",
         category: "tax",
+      },
+      {
+        key: "sandbox_mode",
+        value: true,
+        description: "Modo de prueba: salta Stripe/PayPal y simula compras exitosas",
+        category: "dev",
+      },
+      {
+        key: "sms_2fa_enabled",
+        value: false,
+        description: "Activa o desactiva la verificación de 2 pasos vía SMS para todos los usuarios",
+        category: "sms",
+      },
+      {
+        key: "sms_sandbox_mode",
+        value: true,
+        description: "No envía SMS real. El código aparece en pantalla para probar el flujo sin Twilio.",
+        category: "sms",
+      },
+      {
+        key: "twilio_account_sid",
+        value: "",
+        description: "Account SID de Twilio — encuéntralo en twilio.com/console",
+        category: "sms",
+      },
+      {
+        key: "twilio_auth_token",
+        value: "",
+        description: "Auth Token de Twilio — encuéntralo en twilio.com/console (sensible)",
+        category: "sms",
+      },
+      {
+        key: "twilio_phone_number",
+        value: "",
+        description: "Número de teléfono remitente de Twilio, ej: +15005550006",
+        category: "sms",
       },
     ];
 
